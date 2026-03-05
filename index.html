@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>কাবুলের শেষ রাত</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500&family=Hind+Siliguri:wght@300;400;500;600&family=Share+Tech+Mono&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2ead8;
+    --ink: #1a1410;
+    --blood: #8b1a1a;
+    --brass: #b8902a;
+    --shadow: #2d2416;
+    --dim: #6b5a3e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0b08;
+    font-family: 'Hind Siliguri', sans-serif;
+    color: var(--paper);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* TITLE SCREEN */
+  #title-screen {
+    position: fixed; inset: 0;
+    background: #0d0b08;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    transition: opacity 1.2s ease;
+  }
+
+  #title-screen.fade-out { opacity: 0; pointer-events: none; }
+
+  .title-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, rgba(184,144,42,0.08) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.005) 2px, rgba(255,255,255,0.005) 4px);
+  }
+
+  .title-emblem {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--brass);
+    opacity: 0.5;
+    letter-spacing: 0.3em;
+    margin-bottom: 40px;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 0.5; }
+    96% { opacity: 0.2; }
+    97% { opacity: 0.6; }
+    98% { opacity: 0.15; }
+    99% { opacity: 0.5; }
+  }
+
+  .title-main {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: clamp(38px, 8vw, 84px);
+    font-weight: 600;
+    color: var(--paper);
+    text-align: center;
+    line-height: 1.0;
+    text-shadow: 0 0 60px rgba(184,144,42,0.3);
+    animation: titleReveal 2s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes titleReveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .title-sub {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 17px;
+    color: var(--brass);
+    margin-top: 16px;
+    animation: titleReveal 2s 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  .title-author {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.3em;
+    margin-top: 40px;
+    animation: titleReveal 2s 1s ease forwards;
+    opacity: 0;
+  }
+
+  .title-divider {
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--brass), transparent);
+    margin: 36px auto;
+    animation: titleReveal 2s 1.2s ease forwards;
+    opacity: 0;
+  }
+
+  .title-context {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 15px;
+    color: var(--dim);
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.8;
+    animation: titleReveal 2s 1.5s ease forwards;
+    opacity: 0;
+  }
+
+  .start-btn {
+    margin-top: 60px;
+    padding: 14px 48px;
+    background: transparent;
+    border: 1px solid var(--brass);
+    color: var(--brass);
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.3s;
+    animation: titleReveal 2s 2s ease forwards;
+    opacity: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--brass);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  .start-btn:hover::before { transform: scaleX(1); }
+  .start-btn:hover { color: #0d0b08; }
+
+  /* MAIN READER */
+  #reader { display: none; min-height: 100vh; }
+  #reader.visible { display: flex; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: 280px;
+    min-height: 100vh;
+    background: #0d0b08;
+    border-right: 1px solid rgba(184,144,42,0.2);
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 32px 0;
+  }
+
+  #sidebar.open { transform: translateX(0); }
+
+  .sidebar-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--brass);
+    letter-spacing: 0.4em;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid rgba(184,144,42,0.15);
+    margin-bottom: 16px;
+  }
+
+  .chapter-nav-item {
+    display: block;
+    padding: 12px 24px;
+    color: var(--dim);
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+    line-height: 1.4;
+  }
+
+  .chapter-nav-item:hover {
+    color: var(--paper);
+    border-left-color: var(--brass);
+    background: rgba(184,144,42,0.05);
+    padding-left: 28px;
+  }
+
+  .chapter-nav-item.active {
+    color: var(--brass);
+    border-left-color: var(--brass);
+    background: rgba(184,144,42,0.08);
+  }
+
+  .chapter-num {
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    margin-bottom: 3px;
+  }
+
+  /* TOP BAR */
+  #topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(13,11,8,0.95);
+    border-bottom: 1px solid rgba(184,144,42,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 40;
+    backdrop-filter: blur(8px);
+  }
+
+  #menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px;
+  }
+
+  #menu-btn span {
+    display: block;
+    width: 22px; height: 1px;
+    background: var(--brass);
+    transition: all 0.3s;
+  }
+
+  #menu-btn.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+  #menu-btn.open span:nth-child(2) { opacity: 0; }
+  #menu-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+  .topbar-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.3em;
+  }
+
+  .topbar-chapter {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 14px;
+    color: var(--brass);
+  }
+
+  #progress-bar {
+    position: fixed;
+    top: 56px; left: 0; right: 0;
+    height: 2px;
+    background: rgba(184,144,42,0.1);
+    z-index: 40;
+  }
+
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brass), #e8b84b);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* CONTENT */
+  #content-area {
+    margin-top: 58px;
+    min-height: calc(100vh - 58px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .chapter-page {
+    display: none;
+    width: 100%;
+    max-width: 740px;
+    padding: 60px 40px 120px;
+    animation: pageReveal 0.6s ease forwards;
+  }
+
+  .chapter-page.active { display: block; }
+
+  @keyframes pageReveal {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .chapter-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(184,144,42,0.2);
+  }
+
+  .ch-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--brass);
+    letter-spacing: 0.4em;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .ch-title {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 600;
+    color: var(--paper);
+    line-height: 1.2;
+  }
+
+  .chapter-body p {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 2.0;
+    color: #d4c9b0;
+    margin-bottom: 26px;
+    text-align: justify;
+  }
+
+  .chapter-body p.dialogue {
+    padding-left: 20px;
+    border-left: 2px solid rgba(184,144,42,0.3);
+    font-style: normal;
+  }
+
+  .kabul-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    padding: 6px 12px;
+    border: 1px solid rgba(184,144,42,0.15);
+    margin-bottom: 12px;
+  }
+
+  .clock-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blood);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* NOTE CARD */
+  .note-card {
+    background: rgba(184,144,42,0.05);
+    border: 1px solid rgba(184,144,42,0.2);
+    border-left: 3px solid var(--brass);
+    padding: 20px 24px;
+    margin: 32px 0;
+    position: relative;
+  }
+
+  .note-card::before {
+    content: '// প্রণিধির নোট';
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--brass);
+    letter-spacing: 0.2em;
+    display: block;
+    margin-bottom: 14px;
+    opacity: 0.7;
+  }
+
+  .note-card p {
+    font-family: 'Hind Siliguri', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    color: var(--dim) !important;
+    line-height: 1.8 !important;
+    margin-bottom: 8px !important;
+    text-align: left !important;
+  }
+
+  /* SUSPECT DOSSIER */
+  .suspect-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+  }
+
+  .suspect-card {
+    background: #0d0b08;
+    border: 1px solid rgba(184,144,42,0.15);
+    padding: 20px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .suspect-card:hover { border-color: rgba(184,144,42,0.4); }
+  .suspect-card.arrested { border-color: var(--blood); }
+
+  .suspect-card.arrested::after {
+    content: 'গ্রেপ্তার';
+    position: absolute; top: 8px; right: 8px;
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 9px;
+    color: var(--blood);
+    border: 1px solid var(--blood);
+    padding: 2px 6px;
+  }
+
+  .suspect-name {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+
+  .suspect-role {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--brass);
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
+  }
+
+  .suspect-detail {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  /* BOTTOM NAV */
+  #bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: rgba(13,11,8,0.97);
+    border-top: 1px solid rgba(184,144,42,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 40;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid rgba(184,144,42,0.3);
+    color: var(--dim);
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 13px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover:not(:disabled) { border-color: var(--brass); color: var(--brass); }
+  .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+  .chapter-counter {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    text-align: center;
+  }
+
+  .chapter-counter span {
+    color: var(--brass);
+    font-size: 18px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  #overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 45;
+    background: rgba(0,0,0,0.5);
+  }
+  #overlay.visible { display: block; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0d0b08; }
+  ::-webkit-scrollbar-thumb { background: rgba(184,144,42,0.3); }
+
+  #content-area::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  @media (max-width: 600px) {
+    .chapter-page { padding: 40px 20px 100px; }
+    .chapter-body p { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-bg"></div>
+  <div class="title-emblem">কাবুল · আগস্ট ২০২১ · গোপনীয়</div>
+  <h1 class="title-main">কাবুলের শেষ রাত</h1>
+  <div class="title-sub">একটি গোয়েন্দা উপন্যাস</div>
+  <div class="title-author">BY FRACTURED CYNICISM</div>
+  <div class="title-divider"></div>
+  <p class="title-context">একজন নিখোঁজ সাংবাদিক। একটি দূতাবাস। একটি শহরের হাতে বাকি মাত্র আটচল্লিশ ঘণ্টা।</p>
+  <button class="start-btn" onclick="startReading()">পড়া শুরু করুন</button>
+</div>
+
+<div id="sidebar">
+  <div class="sidebar-title">অধ্যায়সমূহ</div>
+  <div id="chapter-list"></div>
+</div>
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<div id="reader">
+  <div id="topbar">
+    <button id="menu-btn" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-title">কাবুলের শেষ রাত</div>
+    <div class="topbar-chapter" id="topbar-chapter-label">অধ্যায় ১</div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <div id="content-area"></div>
+
+  <div id="bottom-nav">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">← আগে</button>
+    <div class="chapter-counter">
+      <span id="ch-current">1</span>
+      <div>/ ১২</div>
+    </div>
+    <button class="nav-btn" id="next-btn" onclick="navigate(1)">পরে →</button>
+  </div>
+</div>
+
+<script>
+const chapters = [
+  {
+    num: 1,
+    title: "মেরিগোল্ড",
+    time: "০২:৪৭ · কাবুল",
+    body: [
+      "ফোনটা এল রাত দুটো সাতচল্লিশে।",
+      "কাবুল তখন চুপ। তবে সে চুপ নয় যেটায় মন শান্ত হয় — এ হল সেই নিস্তব্ধতা যার ভেতরে কিছু একটা লুকিয়ে থাকে। শেষ আমেরিকান কনভয় হাইওয়ে ওয়ান ধরে দক্ষিণে মিলিয়ে গিয়েছে তিন দিন আগে — আর ফেরেনি। চেকপোস্টগুলো ফাঁকা। আফগান সেনাবাহিনী পিছু হটছিল না, আত্মসমর্পণও করছিল না। শুধু গলে যাচ্ছিল। জলে লবণের মতো — যেন কখনো শক্ত ছিলই না।",
+      "অন্ধকারে ফোনের দিকে হাত বাড়ালেন ডিটেকটিভ উত্তম প্রণিধি।",
+      "বাইরে, শহরের কোথাও, একটা কুকুর ডেকে থামল। আর কিছু সাড়া দিল না।",
+      "ওপাশের মহিলা পাশতো আর পাঞ্জাবি মিশিয়ে বলছিলেন — যেভাবে মানুষ কথা বলে যখন কান্না আটকে রাখার শেষ চেষ্টা চলছে, আর শোকের ভাষা বারবার পালটে যাচ্ছে নিজেই।",
+      "\"আমার স্বামী এই নম্বরটা দিয়েছিল। বলেছিল মধ্যরাতের মধ্যে ফোন না করলে আমি যেন করি।\"",
+      "মধ্যরাত পেরিয়ে গেছে বহুক্ষণ। মহিলার নাম প্রীতিন্দর কৌর। তাঁর স্বামী তারিক সিদ্দিকি — ফটোসাংবাদিক — দুপুরে পাকিস্তানি দূতাবাসে ঢুকেছিলেন পাসপোর্ট জমা দিতে। শিখ-আফগান দম্পতির বিয়ের নথিপত্রের ব্যাপার। ফেরেননি।",
+      "\"সে কোন শব্দটা বলার কথা ছিল?\" প্রণিধি জিজ্ঞেস করলেন। \"নিরাপদ পৌঁছালে।\"",
+      "এক মুহূর্ত থামলেন মহিলা। \"মেরিগোল্ড।\"",
+      "সেই শব্দ আসেনি। যেটা নিজেই একটা উত্তর।",
+      "\"আমি তাঁকে খুঁজে বের করব।\" প্রণিধি বললেন। নিজেও প্রায় বিশ্বাস করলেন।",
+      "ততক্ষণে তিনি জ্যাকেট গায়ে দিচ্ছিলেন।"
+    ]
+  },
+  {
+    num: 2,
+    title: "যুদ্ধের থালা",
+    time: "ভোরবেলা · কাবুল পতনের মুখে",
+    body: [
+      "জালালাবাদ পড়ল সকালের নাস্তার আগেই। একটি গুলিও ছোড়া হয়নি। তালিবানের এখন আর বুলেটের দরকার নেই — আমেরিকা সেই কাজ করে দিয়ে গেছে। রাতের অন্ধকারে বাগরাম গুটিয়ে পালিয়েছে যেন ভাড়াটে ভাড়া না মিটিয়ে চম্পট দিয়েছে, মাদুরের নিচে চাবি রেখে — যে আগে আসবে তার জন্য।",
+      "কাবুলের পালা পরের। সকলেই জানে। কেউ বলে না।",
+      "ত্রিশ কিলোমিটার। তারপর বিশ। সংখ্যাটা কমছে জ্বরের শেষ দিনগুলোর মতো।",
+      "ওয়াজির আকবর খান রোডের পাকিস্তানি দূতাবাসে পৌঁছে প্রণিধি দেখলেন পাহারাদার দ্বিগুণ, কর্মী অর্ধেক। বিস্ফোরণ-রোধী দেওয়ালের ওপারে শহরটা নিজেকেই গিলে খাচ্ছে। পরিবারগুলো দ্রুত সরছে — সেই বিশেষ তাড়ায় যেটা জন্মায় যখন বেঁচে থাকার অঙ্কে ঠিক হয়ে গেছে কতটুকু বহন করা যাবে, কতদূর যাওয়া যাবে।",
+      "একজন নিখোঁজ সাংবাদিক। একটি দূতাবাস। একটি শহরের হাতে বাকি আটচল্লিশ ঘণ্টা।",
+      "গেটে দাউইত কারিমি অপেক্ষা করছিল। আফগান পুলিশ ইন্সপেক্টর, বয়স ছাব্বিশ। সেই ধারালো বুদ্ধির মানুষ যেটা তৈরি হয় অমনোযোগী হলে যে দেশ শাস্তি দেয় সেখানে বড় হলে। সবকিছু এখনই জানার অভ্যাস — অধৈর্য থেকে নয়, কারণ সেই আগস্টে কাবুলে তথ্যের আয়ু ছিল ঘণ্টায় মাপা।",
+      "\"কী জানেন?\" পাশাপাশি হাঁটতে হাঁটতে দাউইত জিজ্ঞেস করল।",
+      "\"যথেষ্ট নয়। আবার অনেক বেশি।\" প্রণিধি বললেন। ভেতরে ঢুকলেন।",
+      "জাতিসংঘের নিরাপত্তা পরিষদকে ইতিমধ্যে জানানো হয়েছে। ভিয়েনা কনভেনশনের ধারা বাইশ — কূটনৈতিক মিশনের ভেতরে অমীমাংসিত নিখোঁজ। দেশটা ভাঙছে, পাকিস্তান-ভারত-চিন তিনটেই একে অপরের মুখের দিকে চেয়ে আছে যেন তাস খেলছে, কিন্তু কেউ এখনও হাত দেখায়নি।",
+      "ইন্টারপোল প্রণিধিকে বারো ঘণ্টা দিয়েছে।",
+      "তাঁর কাছে এগারোজন সন্দেহভাজন, কোনো মৃতদেহ নেই, আর একটা ভবন যেটা আস্তে আস্তে তাঁকে ছেড়ে চলে যাচ্ছে — দুজন কর্মী অসুস্থতার কথা বলে চলে গেছে, যেটা ওই সপ্তাহে কাবুলে বিদায় জানানোর ভদ্র উপায় ছিল।",
+      "তিনি ক্যামেরা দিয়ে শুরু করলেন।"
+    ]
+  },
+  {
+    num: 3,
+    title: "INGSOC",
+    time: "সকাল · নজরদারির পর্যালোচনা",
+    body: [
+      "দূতাবাসের নজরদারি ব্যবস্থা চোদ্দটির মধ্যে এগারোটি ঘর ঢেকে রেখেছে। কনসুলার বিভাগ — যেখানে তারিককে শেষবার জীবিত দেখা গেছে — তিনটি ব্যতিক্রমের একটি। রক্ষণাবেক্ষণে ত্রুটি, বলল ডিউটি অফিসার। ছয় সপ্তাহ আগে নথিভুক্ত।",
+      "প্রণিধি তারিখটা দেখলেন। গোল দিলেন। ছয় সপ্তাহ কাকতালীয় নয় — এ কথা তিনি জানেন। যে ঘরটাকে অন্ধ রাখতে হবে সেটা আগেভাগে পরিকল্পনা করা হয়েছিল, প্রয়োজন জানার আগেই। এই ধরনের প্রস্তুতির একটা নাম আছে। পূর্বচিন্তিত।",
+      "সেই ভাবনাটা মাথায় তুলে রেখে তিনি কাজের ক্যামেরাগুলোতে ফিরলেন।",
+      "লবির ফুটেজ বলল: তারিক সিদ্দিকি ঢুকেছিলেন বেলা বারোটা চার মিনিটে — কাঁধে ক্যামেরা ব্যাগ, সেই অনায়াস ভঙ্গিতে হাঁটছিলেন যে ভঙ্গি তিনটি যুদ্ধ কভার করা মানুষের থাকে। পাসপোর্টের আমলাতন্ত্র তাঁর কাছে বিপদ মনে হয়নি। তাঁকে কনসুলার বিভাগে পাঠানো হলো। কোনো ক্যামেরায় তাঁকে আর ফিরতে দেখা যায়নি।",
+      "বারোটা তেত্রিশে একজন মহিলা লবিতে ঢুকলেন। একটি হারানো নথির রেফারেন্স নম্বর দিলেন। অপেক্ষার আসনে বসলেন। নব্বই মিনিট কাটালেন। খালি হাতে বেরিয়ে গেলেন — তাড়াহীন, নিশ্চিন্তে।",
+      "প্রণিধি সেই নথি নম্বরটা দূতাবাসের ফাইলিং তালিকায় খুঁজলেন।",
+      "সেটার অস্তিত্ব নেই।",
+      "নোটবুকে লিখলেন: সামিরা ঘিলজাই — পরিচয় অসম্পূর্ণ। রেফারেন্স নম্বর বানোয়াট। নথির জন্য আসেনি। দেখতে এসেছিল। তারপর দাগ দিলেন: সে কীসের অপেক্ষায় ছিল?",
+      "রিভিউ রুমের বাইরের করিডোরে দাউইত দেওয়ালে হেলান দিয়ে বাহু ভাঁজ করে দাঁড়িয়ে। ভবনের দেওয়াল ভেদ করে শহরের বদলে যাওয়ার শব্দ আসছে। একটা দূরের ধাক্কার শব্দ — গতকাল যেটা ছিল না।",
+      "\"হয়তো একটা দিন আছে আমাদের,\" প্রণিধি বেরিয়ে এলে দাউইত বলল।",
+      "\"তাহলে একটা দিনই যথেষ্ট।\""
+    ]
+  },
+  {
+    num: 4,
+    title: "চতুরঙ্গ",
+    time: "দুপুর · ফাঁদ পাতা",
+    body: [
+      "তারিক পাসপোর্ট জমা দিতে আসেননি। সেটা ছিল আবরণ মাত্র।",
+      "তিন সপ্তাহ আগে কুন্দুজের ভেতর দিয়ে উত্তরে যাওয়া একটি রসদ কনভয়ের সঙ্গে ছিলেন তিনি। মূল রাস্তার পাশের একটি কম্পাউন্ডে একটি বৈঠকের ছবি তুলেছিলেন। আইএসআই হ্যান্ডলার আর তালিবান কমান্ডাররা টেবিলে মুখোমুখি, মাঝখানে বাগরাম বিমানঘাঁটির মানচিত্র। ছবিতে মুখ। মানচিত্রে পরিকল্পনা।",
+      "ডেড ড্রপের মাধ্যমে সেই ছবি প্রণিধির কাছে পৌঁছে দেওয়ার ব্যবস্থা করেছিলেন তারিক — ক্যামেরা ব্যাগ, ভবনের ভেতরে নির্দিষ্ট জায়গায় রাখা। পাসপোর্টের আনুষ্ঠানিকতা ছিল ঢোকার অছিলা। ব্যাগটাই ছিল আসল কাজ।",
+      "কেউ জেনে গিয়েছিল। কেউ প্রস্তুত ছিল।",
+      "দুই দিন ধরে এগারোজন সন্দেহভাজনকে জিজ্ঞাসাবাদ করলেন প্রণিধি। সেই ধৈর্যে যে মানুষ শিখেছে চাপ কেবল অভিনয় বের করে, সত্য নয়। আর একটি কৌশলে যেটা বিশ বছরে আটবার ব্যবহার করেছেন তিনি — ক্যানারি ট্র্যাপ।",
+      "প্রত্যেককে দিলেন নিজের জানা তথ্যের সামান্য আলাদা সংস্করণ।",
+      "রেহমানকে — নার্ভাস কনসুলার ক্লার্ক, লাহোরে পরিবার: একজন সাক্ষী প্রসেসিং করিডোরে একজন নয়, দুজনকে ঢুকতে দেখেছে।",
+      "কর্নেল ফারহান আফ্রিদিকে — সামরিক ভঙ্গিমার বাণিজ্য অ্যাটাশে, সহযোগিতার রিহার্সাল করা হাসি: ক্যামেরার ত্রুটি ফরেনসিকে ছয় সপ্তাহ নয়, চার সপ্তাহ আগের।",
+      "ইউসুফ হায়দারিকে — সিনিয়র ক্লার্ক যে কেউ না চাইলেও বেশি তথ্য দেয় আর দেওয়ার সময় মুখ পড়ে: তারিকের ক্যামেরা ব্যাগ ভবনের ভেতরে পাওয়া গেছে।",
+      "নাদিয়া ওসমানকে — আফগান নার্স যিনি তিন মাস ধরে ভিসার অপেক্ষায় এমন একটি দেশে যে দেশ ভিসা দেওয়া বন্ধ করে দিয়েছে: রাষ্ট্রদূতকে নিজেই জিজ্ঞাসাবাদ করা হয়েছে।",
+      "সামিরা ঘিলজাইকে: কিছুই না। একটি কথাও বললেন না তাকে। শুধু দেখলেন সে নীরবতা নিয়ে কী করে। দেখলেন — সে সেটা দারুণ ভালোভাবে করল।",
+      "আলাদা বীজ। আলাদা পাখি। যে ভুল সুর ফিরিয়ে দেবে, সে এমন কারো সঙ্গে কথা বলেছে যার সঙ্গে বলা ঠিক হয়নি।",
+      "প্রতিটি জিজ্ঞাসাবাদ কক্ষের বাইরে বসে বেরিয়ে আসা মুখগুলো পড়ছিল দাউইত। প্রশ্নগুলো শুনতে হয়নি তাকে। ছয় বছর ধরে সে শুধু বেরিয়ে আসা পড়ে এসেছে।",
+      "সেই সন্ধ্যায় তালিবান পূর্বের প্রবেশ রাস্তা নিল। ডিউটি অফিসারের রেডিওতে শুনলেন প্রণিধি — পাশতোতে কিছু কথা, একটু থামা, তারপর অফিসার চুপচাপ ফ্রিকোয়েন্সি বদলে দিল। ভবনে কেউ একটি কথাও বলল না। এটাও নিজেই একধরনের তথ্য।"
+    ]
+  },
+  {
+    num: 5,
+    title: "ট্রোজান হর্স",
+    time: "সন্ধ্যা · ভেতরের মানুষ",
+    body: [
+      "দ্বিতীয় সন্ধ্যায় দূতাবাসের অভ্যন্তরীণ ফোন লগ দেখাল হায়দারির এক্সটেনশন থেকে রাত এগারোটা সাতচল্লিশে বাইরের একটি নম্বরে ফোন গেছে — তিনটি এক্সচেঞ্জ পেরিয়ে। নম্বরটা প্রণিধি চিনলেন। তিনটি গোয়েন্দা সংস্থাও চেনে, তিনটি আলাদা শহরে, তিনটি আলাদা কারণে।",
+      "হায়দারি অতিরিক্ত সাহায্যকারী ক্লার্ক ছিল না।",
+      "সে ছিল প্রণিধির নিজের ভেতরের লোক। তদন্ত শুরুর ছয় সপ্তাহ আগে বসানো — কেউ তখনও জানত না তদন্তের দরকার হবে। রাষ্ট্রদূতের যোগাযোগে সুরক্ষামূলক নজর রাখছিল সে — সতর্কতা হিসেবে, সন্দেহ থেকে নয়। যা পেল তার বদলে সে একটি তথ্যফাঁস পেল যেটা সম্পূর্ণ উল্টো দিকে বইছিল।",
+      "দ্বিতীয় জিজ্ঞাসাবাদে হায়দারি চা নিয়ে এল। বসল, টেবিলে হাত রাখল। প্রণিধির দিকে তাকাল সেই দৃষ্টিতে যে মানুষ সঠিক মুহূর্তটা বেছে নিচ্ছে।",
+      "\"কনসুলার বিভাগের ক্যামেরা,\" সে আস্তে বলল। \"তারিক ঢোকার সময় কাজ করছিল। রেহমান পরে বন্ধ করেছে — নিজে দেখেছি। কিন্তু রেহমানের কাছে অ্যাক্সেস কোড নেই।\"",
+      "\"তাহলে কার কাছে?\"",
+      "হায়দারি সংযোগকারী দরজার দিকে তাকাল। ফিরল। কণ্ঠ আরেকটু নামল।",
+      "\"রাষ্ট্রদূতের।\"",
+      "বাইরে ভবনের কোথাও একটা জেনারেটর চালু হল। ঘণ্টাখানেক ধরে আলো কাঁপছিল। শহরের বিদ্যুৎ গ্রিড এলাকায় এলাকায় নিভে যাচ্ছে — যেন কাবুল এক মানুষ যে এতটা ধীরে রক্ত হারাচ্ছে যে এখনও দাঁড়িয়ে থাকতে পারছে।"
+    ]
+  },
+  {
+    num: 6,
+    title: "নাইটিঙ্গেল",
+    time: "রাত · সাক্ষী",
+    body: [
+      "তিন মাস চার দিন ধরে দূতাবাসের অপেক্ষাকক্ষে বসে আছেন নাদিয়া ওসমান। ভিসা নবায়নের আবেদন করছেন এমন একটি দেশে যে দেশ নিজেই হওয়া বন্ধ করে দিয়েছে। বয়স একত্রিশ। কাবুলের একটি হাসপাতালে ট্রমা সার্জারিতে কাজ করেছেন — হাসপাতালটা আর বেশিদিন থাকবে না। তাঁর মধ্যে সেই বিশেষ গুণ আছে যা আসে বছরের পর বছর এমন জিনিস দেখার অভ্যাস থেকে যা অন্যরা দেখতে পায় না — কারণ অন্যরা দেখার সুযোগ পায় না।",
+      "রেহমান প্রসেসিং করিডোর থেকে ফিরে আসার সময় সামিরা ঘিলজাই থেকে চার চেয়ার দূরে ছিলেন তিনি।",
+      "প্রণিধির মৃতদেহ খোঁজার পর দাউইত তাঁকে পেল — কুরেশির পাশে বসে, স্কার্ফ ক্ষতস্থানে চেপে ধরেছেন, দারি ভাষায় নিচু গলায় কথা বলছেন। সেই বিশেষ সুর যেটা নার্সরা ব্যবহার করেন যখন শুধু ক্ষতের চিকিৎসা হচ্ছে না।",
+      "হাতে রক্তের দাগ। খেয়াল করছিলেন না।",
+      "\"রেহমান সম্পর্কে জিজ্ঞেস করতে চাই,\" দাউইত বলল। \"করিডোর থেকে ফিরে আসার পর। তার হাতের অবস্থা।\"",
+      "তাকালেন তাঁর দিকে। এর চেয়ে খারাপ দেখেছেন এমন চোখ, ভান করতে রাজি নন।",
+      "\"কাঁপছিল।\" বললেন তিনি। \"ছয় বছর ট্রমা ওয়ার্ডে কাটিয়েছি। একজন ভয় পাওয়া মানুষ আর একজন যে এইমাত্র এমন কিছু করেছে যা আর ফেরানো যাবে না — এই দুটোর তফাৎ চিনি। শুধু ভয় ছিল না ওটা।\"",
+      "\"রেহমান যাওয়ার আগে কেউ কিছু দিয়েছিল তাকে?\"",
+      "একটু ভাবলেন। তাড়াহীন, দ্বিধাহীন। \"নথির দাবির মহিলাটা। ওয়াটার কুলারে। ধাক্কা লাগল। মনে হলো কিছু পড়ে গেছিল, রেহমান তুলে নিল। ছোট। ধাতব। ফোকাস করার আগেই চলে গেল।\"",
+      "\"চাবি। ঘরের চাবি।\"",
+      "ধীরে মাথা নাড়লেন নাদিয়া। অবাক নন। নার্সরা তাড়াতাড়ি শেখে — যথেষ্ট তথ্য পেলে পৃথিবীটা বেশিরভাগই ব্যাখ্যাযোগ্য।",
+      "সরাসরি তাকালেন দাউইতের দিকে। পেছনের জানালা দিয়ে নিচের রাস্তায় গাড়ির শব্দ। থামছে না।",
+      "\"কোনো কাজে আসবে?\" বললেন। \"যা দেখেছি। এই সব কিছুর মধ্যে —\" শেষ করলেন না। জানালার দিকে তাকালেন।",
+      "দাউইত ভাবল করিডোরের শেষ মাথার ঘরে প্রণিধির মৃতদেহের কথা। জ্যাকেটের পকেটে নোটবুক। তারাচিহ্নিত একটি নম্বর।",
+      "\"ইতিমধ্যে এসেছে।\" বলল সে।"
+    ]
+  },
+  {
+    num: 7,
+    title: "সময়ের বালি",
+    time: "গভীর রাত · নোটবুক",
+    body: [
+      "রাষ্ট্রদূতের অফিসে নোটবুকটা পড়লেন। ঘরের অন্যপাশে কুরেশি তখনও নিঃশ্বাস নিচ্ছেন। দেওয়াল ভেদ করে কাবুলের নতুনভাবে সাজানোর শব্দ আসছে। প্রণিধির হাতের লেখা ছোট এবং স্পষ্ট — সেই মানুষের লেখা যে তাড়াতাড়ি বুঝেছে প্রমাণ ততটুকুই শক্তিশালী যতটুকু তার নথিভুক্তি।",
+      "রেহমান, ঊনত্রিশ। লাহোরে পরিবার, মা অসুস্থ, এমন বেতনে মাসে মাসে টাকা পাঠায় যেটা যথেষ্ট নয়। জিজ্ঞাসাবাদে চোখ দুবার সংযোগকারী দরজার দিকে সরল। আমাকে ভয় পাচ্ছে না। দরজার ওপাশের কাউকে ভয় পাচ্ছে। চাপ। মতাদর্শ নয়।",
+      "আফ্রিদি। ১২:৫৫-তে বেরিয়েছে — লগ করা, টাইমস্ট্যাম্প আছে, গেট গার্ড নিশ্চিত করেছে। একটু বেশি পরিষ্কার। ১৩:৪০-এ সার্ভিস এন্ট্রান্স দিয়ে ফিরেছে। গেট লগে নেই। সার্ভিস এন্ট্রান্সে ক্যামেরা নেই। ভবনের অন্ধ জায়গাগুলো সে আগে থেকেই জানত।",
+      "ওয়াটার কুলারে ব্রাশ পাস — সামিরা থেকে রেহমান, ১২:৩১, লবি ক্যামেরা। নথি নয়। অনেক ছোট। ঘরের চাবি। প্রসেসিং রুম ভেতর থেকে বন্ধ। বিশ মিনিট। তারপর আফ্রিদি সার্ভিস এন্ট্রান্স দিয়ে ফিরল।",
+      "ক্যামেরা ব্যাগ রেকর্ডস রুমে — মিথ্যা প্যানেলের পেছনে। প্রথম জিজ্ঞাসাবাদে রেহমানের চোখ দুবার সেদিকে গেছে। যা রক্ষা করছে তার দিকে তাকানো থামাতে পারছিল না।",
+      "কুরেশি রেহমানকে অ্যাক্সেস কোড দিয়েছে। নির্দেশ দেয়নি। নির্দেশ দেওয়ার মানুষ নয় — নেওয়ার মানুষ। শৃঙ্খল বেয়ে ওপরে।",
+      "সামিরা — আইএসআই লজিস্টিক্স, করাচি ২০১৯-এ চিহ্নিত, কখনো ধরা পড়েনি। কাজ করতে আসেনি। নিশ্চিত করতে এসেছিল। তার মানে কর্তা আগেই ভেতরে।",
+      "আগামীকাল বৈঠক ডাকছি। সব পক্ষ। রিসেপশন হল। ২:৩০-এর মধ্যে না পৌঁছালে — কারিমি আগে আমাকে খুঁজবে। সে পরিষ্কার। মনে হচ্ছে। কিন্তু এতদিন বেঁচে আছি শুধু মনে করে নয়।",
+      "নোটবুক বন্ধ করল দাউইত।",
+      "জানালায় দুই ব্লক দক্ষিণে — কাঁধে রাইফেল নিয়ে রাস্তায় মানুষ হাঁটছে। দৌড়াচ্ছে না। হাঁটছে — সেই নিশ্চিন্ত কর্তৃত্বে যাদের বলা হয়েছে এই শহর তাদের।",
+      "হাতে নোটবুক। নিরাপত্তা পরিষদের অধিবেশনের আগে চল্লিশ মিনিট। একজন মৃত গোয়েন্দা, একজন মৃতপ্রায় রাষ্ট্রদূত, পাশের ঘরে দশজন সন্দেহভাজন — যারা মনে করছে বৈঠকের অপেক্ষায় আছে।",
+      "দ্রুত কাজে লাগল সে।"
+    ],
+    note: true,
+    noteContent: [
+      "রেহমান — চাপ, মতাদর্শ নয়। দরজার পেছনে যা আছে তাকে ভয় পাচ্ছে।",
+      "আফ্রিদি — সার্ভিস এন্ট্রান্স দিয়ে পুনরায় প্রবেশ ১৩:৪০-এ। লগে নেই। সে ভবনের অন্ধ জায়গাগুলো জানত।",
+      "সামিরা — কাজ করতে আসেনি। নিশ্চিত করতে এসেছিল। কর্তা আগেই ভেতরে।",
+      "শৃঙ্খল: সামিরা → আফ্রিদি → রেহমান → কুরেশি (অ্যাক্সেস কোড) → শেষ।",
+      "ক্যামেরা ব্যাগ। মিথ্যা প্যানেল। রেকর্ডস রুম। তারিক এই ভবন চিনত।"
+    ]
+  },
+  {
+    num: 8,
+    title: "ভয়্যুরিজম",
+    time: "ভোরের আগে · ছবিগুলো",
+    body: [
+      "ক্যামেরা ব্যাগ ঠিক সেখানেই — প্রণিধি যেখানে লিখেছিলেন। মিথ্যা প্যানেল, রেকর্ডস রুম। খুললেন দাউইত। ভেতরে সেই ছবিগুলো যেগুলো তারিক সিদ্দিকির সর্বস্বের বিনিময়ে তোলা।",
+      "বাগরাম বিমানঘাঁটি।",
+      "লক্ষ্য নয়। হস্তান্তর পয়েন্ট।",
+      "তিন দিন আগে রাতের অন্ধকারে আমেরিকানরা চলে গেছে — আফগান সহযোগীদের না জানিয়ে। দেশের সবচেয়ে বড় সামরিক ঘাঁটি, কাবুল থেকে ষাট কিলোমিটার উত্তরে। পেছনে রেখে গেছে একটি ছোট যুদ্ধ চালানোর মতো সরঞ্জাম — গাড়ি, গোলাবারুদ, যোগাযোগ পরিকাঠামো, জ্বালানির মজুদ। রেখে গেছে কারণ সময়মতো সরানো যাচ্ছিল না, অথবা দরকার হবে না ভেবেছিল, অথবা হিসাব করেছিল এখন আর গুরুত্ব নেই।",
+      "ছবিগুলো বলল — গুরুত্ব আছে। কুন্দুজের কম্পাউন্ডে আইএসআই আর তালিবান পরিকল্পনা করছিল না কাবুল দখলের। পরিকল্পনা ছিল বাগরামে একটি নির্দিষ্ট অভিযানের — সামরিক সরঞ্জামের সমন্বিত হস্তান্তর, আমেরিকান প্রত্যাহারের সাথে সময় মিলিয়ে, শহর পতনের শোরগোলে আড়াল করা।",
+      "কাবুল ছিল বিভ্রান্তি। বাগরাম ছিল আসল পুরস্কার। আর সেই জানালা — তালিবান পৌঁছানোর আগে নিরাপদ করার — ঘণ্টায় ঘণ্টায় সংকুচিত হচ্ছে।",
+      "ছবিগুলো রেখে রেহমানকে খুঁজতে গেল দাউইত।"
+    ]
+  },
+  {
+    num: 9,
+    title: "তাসের ঘর",
+    time: "ভোরের আগে · স্বীকারোক্তি",
+    body: [
+      "ফাঁকা অ্যাডমিন অফিসে তার ডেস্কে পেল তাকে। কাজ করছে না, শুধু বসে। বাকিরা চলে গেছে। ঘরে পোড়া কফির গন্ধ আর সেই বিশেষ বাসি হাওয়া যেটা থাকে এমন ভবনে যেটা জানে তাকে ছেড়ে যাওয়া হচ্ছে।",
+      "দাউইত ঢুকতে রেহমান মুখ তুলল। তিন দিন ঘুমায়নি এমন মানুষের চেহারা। ঘুমের জন্য একটা ন্যূনতম আশার দরকার হয়।",
+      "সামিরা ঘিলজাইয়ের ছবিটা ডেস্কে রাখল দাউইত।",
+      "ছবির দিকে তাকাল রেহমান। তার ভেতরে কিছু একটা — যেটা এতদিন তাকে খাড়া রেখেছিল — ভেঙে পড়ল। নাটক নেই। শুধু সেই নিঃশব্দ ধস যেটা আসে যখন অনেকদিনের ভার বহন করা কাঠামো আর পারে না।",
+      "ছয় মিনিট কথা বলল। অ্যাক্সেস কোড, সার্ভিস এন্ট্রান্স, প্রসেসিং করিডোরের বিশ মিনিট — যার উদ্দেশ্য সে জানত না, এমন বলল। যেভাবে মানুষ অর্ধেক বিশ্বাস করা কথা বলে — সেই বিশেষ সুরে যে মানুষ ঠিক করছে ঘটনার কোন সংস্করণের ভেতরে বাকি জীবন কাটাবে।",
+      "\"আফ্রিদি নির্দেশ দিয়েছিল।\" দাউইত বলল। প্রশ্ন ছিল না সেটা।",
+      "জানালার দিকে তাকাল রেহমান। বাইরে কোথাও স্বয়ংক্রিয় গুলির শব্দ, তারপর নীরবতা। সেই নীরবতা যেটা আসে যখন সবাই ভাবছে পরে কী করবে।",
+      "\"বলেছিল পরিষ্কার হবে। বলেছিল কেউ আহত হবে না।\" রেহমানের কণ্ঠ সমতল, শুকনো। \"বলেছিল সাংবাদিক এমন কিছু নিয়েছে যেটা তার ছিল না।\"",
+      "\"আফ্রিদি এখন কোথায়?\"",
+      "ছাদের দিকে তাকাল রেহমান। \"চলে যায়নি।\"",
+      "দাউইত ততক্ষণে বেরিয়ে গেছে।"
+    ]
+  },
+  {
+    num: 10,
+    title: "মুখোমুখি",
+    time: "প্রথম আলোর আগে · সংঘাত",
+    body: [
+      "পূর্বের করিডোরের শেষে সার্ভিস এন্ট্রান্স — সেই একই করিডোর যেখানে প্রণিধির মৃতদেহ পড়ে আছে, কুরেশি দেওয়ালে হেলান দিয়ে রক্ত হারাচ্ছেন, ভবনের একমাত্র বাকি নিরাপত্তা রক্ষী বিশ মিনিট ধরে নিশ্চুপ।",
+      "ইমার্জেন্সি পাওয়ারে আলো। প্রতি ত্রিশ সেকেন্ডে কাঁপছে — আধ সেকেন্ডের অন্ধকার, যেখানে যা কিছু ঘটা সম্ভব। করিডোর এতটাই লম্বা যে শেষ মাথা সবসময় ছায়ায় ডোবা।",
+      "পিস্তল বের করে দেওয়ালে পিঠ রেখে এগোল দাউইত। প্রশিক্ষণ ফিরে এলো টুকরো টুকরো হয়ে — আগে কোণ, পরে দরজা, খোলা জায়গা সবশেষে। থামা চলবে না। স্থির লক্ষ্যে পরিণত হওয়া চলবে না।",
+      "বাঁয়ে প্রথম দরজা: সাপ্লাই ক্লোজেট। খোলা। ফাঁকা।",
+      "দ্বিতীয় দরজা: বাথরুম। পা দিয়ে ঠেলল। ফাঁকা।",
+      "ত্রিশ সেকেন্ড। আলো কাঁপল। এক সেকেন্ডের কালো।",
+      "আলো ফিরলে আফ্রিদি করিডোরের শেষ মাথায়।",
+      "দৌড়াচ্ছে না। দাঁড়িয়ে। জ্যাকেট খোলা, কোমরে অস্ত্র দেখা যাচ্ছে, দু-পাশে হাত মেলা — এমন ভঙ্গিতে যে মানুষ শান্তির অভিনয় করছে।",
+      "\"ইন্সপেক্টর কারিমি।\" কণ্ঠ করিডোরের দৈর্ঘ্য পেরিয়ে সাফ এল, যেন আগেও এভাবে কথা বলেছে। \"আপনি আপনার এখতিয়ারের অনেক বাইরে।\"",
+      "\"গার্ড কোথায়?\"",
+      "\"বিশ্রামে। ঠিক আছে।\" একটু থামল। \"ব্যাগে কী পেয়েছেন জানেন। মানে কী জানেন। প্রশ্ন হল সেটা নিয়ে কী করবেন।\"",
+      "\"প্রশ্ন হল,\" দাউইত বলল, \"আপনি ওই মাথা থেকে বেরিয়ে আসবেন কিনা, নাকি আমি যাব।\"",
+      "আফ্রিদির ডান হাত আধ সেন্টিমিটার কোমরের দিকে নড়ল।",
+      "আলো কাঁপল।",
+      "দাউইত এক হাঁটুতে নামল, নল উপরে। অন্ধকার থাকল এক সেকেন্ড — গুলি করার জন্য যথেষ্ট, মরার জন্য যথেষ্ট। আলো ফেরার সময় আফ্রিদির হাত এখনও নড়ছে এবং দাউইতের কণ্ঠ করিডোর পেরিয়ে গেল যেন কোনো শারীরিক বস্তু ছুটে গেল।",
+      "\"না।\"",
+      "একটাই শব্দ। তার ভার ছিল যেটা এলো তার পরে — কিছুই না। দ্বিতীয় সতর্কতা নেই।",
+      "আফ্রিদির হাত থামল।",
+      "পাঁচ সেকেন্ড কেউ নড়ল না। বাইরে করিডোরের উঁচু জানালা দিয়ে রাস্তায় কিছু বড় একটা সরার শব্দ এল। গাড়ি। একাধিক। ডিজেলের ভারী গর্জন — দূতাবাসের গাড়ি নয়।",
+      "জানালার দিকে তাকাল আফ্রিদি। তারপর দাউইতের দিকে। তার মাথার ভেতরে কিছু একটা বদলাল।",
+      "হাত তুলল।",
+      "আট পদক্ষেপে করিডোর পেরোল দাউইত। অস্ত্র নিল। লোকটা পরিস্থিতি বিবেচনার আগেই কব্জি বেঁধে দেওয়ালে ঠেসে ধরল। কাছ থেকে আফ্রিদির গায়ে ঘাম আর ওষুধের গন্ধ। নিঃশ্বাস নিয়ন্ত্রিত — এর চেয়ে কঠিন পরিস্থিতি পার করা মানুষের নিঃশ্বাস, যে ইতিমধ্যে পরের পথ বের করছে।",
+      "\"সামিরা বলেছিল যা চলছে থামানো যাবে না,\" দাউইত বলল।",
+      "\"সে ঠিকই বলেছিল।\"",
+      "\"সে গ্রেপ্তার। আপনিও।\" দাউইত তাকে করিডোরের দিকে টানল। \"হাঁটুন।\""
+    ]
+  },
+  {
+    num: 11,
+    title: "সমর্পণ",
+    time: "০৬:০০ · বার্তা প্রেরণ",
+    body: [
+      "ভোর ছটায় সব পাঠিয়ে দিল — প্রণিধির নোটবুক, ছবিগুলো, সার্ভিস লগ, রেহমানের জবানবন্দি, নাদিয়ার সাক্ষ্য, আফ্রিদির গ্রেপ্তারের রিপোর্ট। প্রণিধির নোটবুকে তারাচিহ্নিত নম্বরের মাধ্যমে, যেটা একটি রাউটিং কোডে গিয়ে পৌঁছাল — ২০১৯ সালের একটি যৌথ অভিযানের কোড যেটা আনুষ্ঠানিকভাবে হয়নি।",
+      "তারা অপেক্ষায় ছিল।",
+      "বিনা ঘটনায় সামিরা ঘিলজাইকে ধরা গেল রিসেপশন হলে। সেই চেয়ারে বসা ছিল যেটায় শেষ চার ঘণ্টা কাটিয়েছে — যেন সে ঠিক করেছে চেয়ারটা তার, পরিস্থিতি যেভাবেই মেটাক।",
+      "\"যা চলছে থামানো যাবে না,\" আবার বলল সে।",
+      "\"বারবার বলছ।\" দাউইত বলল। \"এবার বলো কী চলছে।\"",
+      "কিছু বলল না।",
+      "সে বলবে বলে আশা করেনি দাউইত। সেটার জন্যই তো ছবিগুলো।"
+    ],
+    suspects: [
+      { name: "সামিরা ঘিলজাই", role: "ISI লজিস্টিক্স", detail: "নিশ্চিত করতে এসেছিল, কাজ করতে নয়। নথির রেফারেন্স বানোয়াট। রেহমানকে চাবি দিয়েছিল।", status: "arrested" },
+      { name: "কর্নেল ফারহান আফ্রিদি", role: "বাণিজ্য অ্যাটাশে / ISI", detail: "অপারেশনের মূল পরিকল্পনাকারী। ১৩:৪০-এ সার্ভিস এন্ট্রান্স দিয়ে ফিরেছিল। প্রতিটি অন্ধ জায়গা চিনত।", status: "arrested" },
+      { name: "ফারুখ রেহমান", role: "কনসুলার ক্লার্ক", detail: "চাপের শিকার, মতাদর্শের নয়। সামিরার কাছ থেকে চাবি। কুরেশির কাছ থেকে অ্যাক্সেস কোড।", status: "arrested" },
+      { name: "রাষ্ট্রদূত কুরেশি", role: "রাষ্ট্রদূত", detail: "ক্যামেরার অ্যাক্সেস কোড দিয়েছিল। নির্দেশ দেয়নি — মেনেছিল। গুরুতর আহত।", status: "" },
+      { name: "ইউসুফ হায়দারি", role: "প্রণিধির সহযোগী", detail: "ভেতরের লোক। রেহমানকে ক্যামেরা বন্ধ করতে দেখেছিল। শেষে ট্রোজান হর্স উন্মোচিত।", status: "" },
+      { name: "নাদিয়া ওসমান", role: "সাক্ষী / নার্স", detail: "ওয়াটার কুলারে ব্রাশ পাস দেখেছিলেন। তিন মাস অপেক্ষাকক্ষে। সব চোখে পড়েছিল।", status: "" }
+    ]
+  },
+  {
+    num: 12,
+    title: "রাজহাঁসের গান",
+    time: "ভোর · কাবুল, শেষ মুহূর্ত",
+    body: [
+      "দোতলার জানালায় দাঁড়িয়ে দাউইত দেখল কাবুলের ওপর আলো ফুটছে। শহরটার বদলে যাওয়া সম্পূর্ণ হচ্ছে। সরকারি গাড়ি কনভয় করে দক্ষিণে। দুই ব্লক পূর্বে ভবনে নতুন পতাকা — তারপর এক ব্লক পূর্বে — তারপর রাস্তার ওপাশে। জোয়ারের মতো।",
+      "পেছনের করিডোরে নাদিয়া ওসমান মেঝেতে বসে, দেওয়ালে পিঠ দিয়ে। এখনও রক্তমাখা পোশাক। অপেক্ষা করছেন। কীসের অপেক্ষা দাউইত জানে না। হয়তো শুধু পরের বিষয়টার — যেটা কেউ সিদ্ধান্ত নেওয়ার ক্ষমতা রাখে সে নেবে।",
+      "ফোন বাজল। ইন্টারপোল, লিয়ঁ।",
+      "\"আইএসআই সংযোগ পেয়েছি,\" ডিউটি অফিসার বলল। \"নিরাপত্তা পরিষদের জন্য যথেষ্ট।\" একটু থামল। রেকর্ড করা লাইনে কথা বলার সতর্ক সুর। \"আরেকটা বিষয়। বিমানঘাঁটি।\"",
+      "\"কতটা?\"",
+      "সংখ্যাটা ছোট ছিল না।",
+      "উত্তরে তাকাল সে। জানালা থেকে দেখা পাহাড়গুলোর দিকে। তার ওপাশে ষাট কিলোমিটার দূরের সেই ঘাঁটির দিকে যেটা দেখা যায় না কিন্তু টের পাওয়া যায় — যেভাবে টের পাওয়া যায় বড় হওয়া বাড়ির একটা দরজা খোলা পড়ে আছে।",
+      "\"নিরাপদ করা যাবে?\"",
+      "যে বিরতি পড়ল সেটা এতটাই দীর্ঘ যে নিজেই একটা উত্তর হয়ে গেল।",
+      "\"চেষ্টা চলছে,\" অফিসার বলল।",
+      "ফোন নামাল দাউইত।",
+      "বাইরে পতাকাগুলো দশ মিনিট আগের চেয়ে কাছে। রাস্তায় রাস্তায়, ব্লকে ব্লকে এগিয়ে আসছে — সেই স্থির গতিতে যেটা অনেকদিন অপেক্ষায় থাকার পর আসে, যে আর তাড়া করে না কারণ সে জিতে গেছে।",
+      "ফোনে দুটো মিসড কল অচেনা নম্বর থেকে।",
+      "ধরল না।",
+      "পেছন থেকে নাদিয়া বললেন: \"এরপর কী হবে?\"",
+      "তারও কোনো উত্তর ছিল না।",
+      "উত্তরে তাকিয়ে রইল সে। হেলিকপ্টারের শব্দের অপেক্ষায়। কোন ধরনটা আগে আসবে — এখনও নিশ্চিত নয়…।"
+    ]
+  }
+];
+
+let currentChapter = 0;
+
+
+
+function startReading() {
+  const ts = document.getElementById('title-screen');
+  ts.classList.add('fade-out');
+  setTimeout(() => {
+    ts.style.display = 'none';
+    document.getElementById('reader').style.display = 'flex';
+    buildChapters();
+    buildSidebar();
+    showChapter(0);
+  }, 1200);
+}
+
+function buildChapters() {
+  const area = document.getElementById('content-area');
+  chapters.forEach((ch, i) => {
+    const div = document.createElement('div');
+    div.className = 'chapter-page' + (i === 0 ? ' active' : '');
+    div.id = `ch-${i}`;
+
+    const bodyHTML = ch.body.map(p => `<p>${p}</p>`).join('');
+
+    let noteHTML = '';
+    if (ch.note && ch.noteContent) {
+      noteHTML = `<div class="note-card">${ch.noteContent.map(n => `<p>${n}</p>`).join('')}</div>`;
+    }
+
+    let suspectsHTML = '';
+    if (ch.suspects) {
+      suspectsHTML = `
+        <div style="margin:40px 0 0;border-top:1px solid rgba(184,144,42,0.2);padding-top:32px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--brass);letter-spacing:0.3em;margin-bottom:20px;">মামলার সমাপ্তি · মূল ব্যক্তিবর্গ</div>
+          <div class="suspect-grid">
+            ${ch.suspects.map(s => `
+              <div class="suspect-card ${s.status === 'arrested' ? 'arrested' : ''}">
+                <div class="suspect-name">${s.name}</div>
+                <div class="suspect-role">${s.role}</div>
+                <div class="suspect-detail">${s.detail}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    }
+
+    div.innerHTML = `
+      <div class="chapter-header">
+        <div class="kabul-clock"><div class="clock-dot"></div>${ch.time}</div>
+        <span class="ch-number">অধ্যায় ${String(ch.num).padStart(2,'0')}</span>
+        <h2 class="ch-title">${ch.title}</h2>
+      </div>
+      <div class="chapter-body">${bodyHTML}${noteHTML}${suspectsHTML}</div>`;
+
+    area.appendChild(div);
+  });
+}
+
+function buildSidebar() {
+  const list = document.getElementById('chapter-list');
+  chapters.forEach((ch, i) => {
+    const item = document.createElement('div');
+    item.className = 'chapter-nav-item' + (i === 0 ? ' active' : '');
+    item.id = `nav-${i}`;
+    item.innerHTML = `<span class="chapter-num">অধ্যায় ${String(ch.num).padStart(2,'0')}</span>${ch.title}`;
+    item.onclick = () => { showChapter(i); toggleSidebar(); };
+    list.appendChild(item);
+  });
+}
+
+function showChapter(idx) {
+  document.querySelectorAll('.chapter-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.chapter-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`ch-${idx}`).classList.add('active');
+  document.getElementById(`nav-${idx}`).classList.add('active');
+  window.scrollTo(0, 0);
+  currentChapter = idx;
+  document.getElementById('topbar-chapter-label').textContent = chapters[idx].title;
+  document.getElementById('ch-current').textContent = idx + 1;
+  document.getElementById('prev-btn').disabled = idx === 0;
+  document.getElementById('next-btn').disabled = idx === chapters.length - 1;
+  document.getElementById('progress-fill').style.width = ((idx + 1) / chapters.length * 100) + '%';
+}
+
+function navigate(dir) {
+  const next = currentChapter + dir;
+  if (next >= 0 && next < chapters.length) showChapter(next);
+}
+
+let sidebarOpen = false;
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+  document.getElementById('overlay').classList.toggle('visible', sidebarOpen);
+  document.getElementById('menu-btn').classList.toggle('open', sidebarOpen);
+}
+</script>
+</body>
+</html>
